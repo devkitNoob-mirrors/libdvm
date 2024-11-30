@@ -11,15 +11,7 @@ bool fatInitDefault(void)
 
 bool fatInit(unsigned cache_pages, bool set_app_cwdir)
 {
-	if (!dvmRegisterFsDriver(&g_vfatFsDriver)) {
-		return false;
-	}
-
-	if (!dvmInit(set_app_cwdir, cache_pages, g_dvmDefaultSectorsPerPage)) {
-		return false;
-	}
-
-	return true;
+	return dvmInit(set_app_cwdir, cache_pages, g_dvmDefaultSectorsPerPage);
 }
 
 bool fatMountSimple(const char* name, const DISC_INTERFACE* iface)

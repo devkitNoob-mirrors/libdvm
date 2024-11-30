@@ -10,7 +10,12 @@
 
 #define MAX_DRIVERS 8
 
-static const DvmFsDriver* s_dvmFsDrvTable[MAX_DRIVERS];
+// vfat filesystem driver
+extern const DvmFsDriver g_vfatFsDriver;
+
+static const DvmFsDriver* s_dvmFsDrvTable[MAX_DRIVERS] = {
+	&g_vfatFsDriver,
+};
 
 typedef struct DvmVolume {
 	devoptab_t dotab;
