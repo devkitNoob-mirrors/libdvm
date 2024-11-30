@@ -7,6 +7,7 @@
 
 __attribute__((weak)) unsigned g_dvmDefaultCachePages = 4;
 __attribute__((weak)) unsigned g_dvmDefaultSectorsPerPage = 64;
+__attribute__((weak)) unsigned g_dvmOgcUsbMount = 1;
 
 void _dvmSetAppWorkingDir(const char* argv0);
 
@@ -29,8 +30,10 @@ bool dvmInit(bool set_app_cwdir, unsigned cache_pages, unsigned sectors_per_page
 	num_mounted += dvmProbeMountDiscIface("sd", sd, cache_pages, sectors_per_page);
 
 #if defined(__wii__)
-	// Try mounting the first found USB drive
-	num_mounted += dvmProbeMountDiscIface("usb", usb, cache_pages, sectors_per_page);
+	// Try mounting the first found USB drive if requested
+	if (g_dvmOgcUsbMount) {
+		num_mounted += dvmProbeMountDiscIface("usb", usb, cache_pages, sectors_per_page);
+	}
 #endif
 
 	// Try mounting Card A
