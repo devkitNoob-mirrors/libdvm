@@ -86,7 +86,7 @@ static DvmDiscCacheEntry* _dvmDiscCacheSearch(DvmDiscCache* self, sec_t page_sec
 
 static uint8_t* _dvmDiscCacheEntryGetData(DvmDiscCache* self, DvmDiscCacheEntry* p)
 {
-	return self->data + ((p-self->entries) << (self->page_shift + 9));
+	return self->data + ((p-self->entries) << (self->page_shift + self->base.sector_shift));
 }
 
 static bool _dvmDiscCacheEntryFlush(DvmDiscCache* self, DvmDiscCacheEntry* p)
@@ -96,7 +96,7 @@ static bool _dvmDiscCacheEntryFlush(DvmDiscCache* self, DvmDiscCacheEntry* p)
 		return true;
 	}
 
-	uint8_t* data = _dvmDiscCacheEntryGetData(self, p) + p->dirty_start*512U;
+	uint8_t* data = _dvmDiscCacheEntryGetData(self, p) + (p->dirty_start << self->base.sector_shift);
 	sec_t sector = p->base_sector + p->dirty_start;
 	unsigned sz = p->dirty_end - p->dirty_start;
 	dvmDebug(" flush %lx (%u) <- %p\n", sector, sz, data);
@@ -158,6 +158,7 @@ static bool _dvmDiscCacheReadWrite(
 	}
 
 	const bool is_aligned = _dvmIsAlignedAccess(buffer, is_write);
+	const unsigned sector_shift = self->base.sector_shift;
 	const unsigned page_sz = 1U << self->page_shift;
 	const unsigned page_mask = page_sz - 1;
 
@@ -191,9 +192,9 @@ static bool _dvmDiscCacheReadWrite(
 		// Cache hit:
 		if (p && p->base_sector == cur_page_sector) {
 _cacheHit:
-			uint8_t* data = _dvmDiscCacheEntryGetData(self, p) + cur_page_offset*512U;
+			uint8_t* data = _dvmDiscCacheEntryGetData(self, p) + (cur_page_offset << sector_shift);
 			if (is_write) {
-				_dvmCacheCopy(data, buffer, cur_sectors*512U);
+				_dvmCacheCopy(data, buffer, cur_sectors << sector_shift);
 
 				// Update dirty range
 				unsigned dirty_end = cur_page_offset + cur_sectors;
@@ -204,7 +205,7 @@ _cacheHit:
 					p->dirty_end = dirty_end;
 				}
 			} else {
-				_dvmCacheCopy(buffer, data, cur_sectors*512U);
+				_dvmCacheCopy(buffer, data, cur_sectors << sector_shift);
 			}
 
 			if (!is_whole && p != self->list.next) {
@@ -270,7 +271,7 @@ _cacheHit:
 		}
 
 		//dvmDebug("advance %lx %lx\n", first_sector, cur_sectors);
-		buffer += cur_sectors*512U;
+		buffer += cur_sectors << self->base.sector_shift;
 		first_sector += cur_sectors;
 		num_sectors -= cur_sectors;
 	}
@@ -317,7 +318,7 @@ DvmDisc* dvmDiscCacheCreate(DvmDisc* inner_disc, unsigned cache_pages, unsigned 
 		return inner_disc;
 	}
 
-	void* data = aligned_alloc(LIBDVM_BUFFER_ALIGN, cache_pages*sectors_per_page*512U);
+	void* data = aligned_alloc(LIBDVM_BUFFER_ALIGN, cache_pages*sectors_per_page << inner_disc->sector_shift);
 	if (!data) {
 		free(disc);
 		return inner_disc;
@@ -327,6 +328,7 @@ DvmDisc* dvmDiscCacheCreate(DvmDisc* inner_disc, unsigned cache_pages, unsigned 
 	disc->base.vt = &s_dvmDiscCacheIface;
 	disc->base.io_type = inner_disc->io_type;
 	disc->base.features = inner_disc->features;
+	disc->base.sector_shift = inner_disc->sector_shift;
 	disc->base.num_sectors = inner_disc->num_sectors;
 	__lock_init(disc->lock);
 	dvmDiscAddUser(inner_disc);

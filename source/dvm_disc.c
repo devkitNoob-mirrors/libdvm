@@ -10,6 +10,10 @@ typedef struct DvmDiscWrap {
 	const DISC_INTERFACE* iface;
 } DvmDiscWrap;
 
+#ifdef LIBDVM_WITH_DETECT_SECTOR_SHIFT
+unsigned _dvmDetectSectorShift(const DISC_INTERFACE* iface);
+#endif
+
 static void _dvmDiscWrapDestroy(DvmDisc* self_)
 {
 	free(self_);
@@ -55,6 +59,11 @@ DvmDisc* dvmDiscCreate(const DISC_INTERFACE* iface)
 		disc->base.io_type = iface->ioType;
 		disc->base.features = iface->features;
 		disc->base.num_users = 0;
+#ifdef LIBDVM_WITH_DETECT_SECTOR_SHIFT
+		disc->base.sector_shift = _dvmDetectSectorShift(iface);
+#else
+		disc->base.sector_shift = 9; // 512 byte sectors
+#endif
 		disc->base.num_sectors = ~(sec_t)0;
 		disc->iface = iface;
 	}

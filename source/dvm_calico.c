@@ -52,18 +52,21 @@ static const DvmDiscIface s_dvmDiscCalicoIface = {
 static DvmDisc s_dvmDiscDldi = {
 	.vt       = &s_dvmDiscCalicoIface,
 	.io_type  = BlkDevice_Dldi,
+	.sector_shift = 9,
 };
 
 static DvmDisc s_dvmDiscSd = {
 	.vt       = &s_dvmDiscCalicoIface,
 	.io_type  = BlkDevice_TwlSdCard,
 	.features = FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE,
+	.sector_shift = 9,
 };
 
 static DvmDisc s_dvmDiscNand = {
 	.vt       = &s_dvmDiscCalicoIface,
 	.io_type  = BlkDevice_TwlNandAes,
 	.features = FEATURE_MEDIUM_CANREAD,
+	.sector_shift = 9,
 };
 
 static DvmDisc* _dvmGetCalicoDisc(DvmDisc* disc, unsigned cache_pages, unsigned sectors_per_page)

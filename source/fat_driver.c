@@ -189,7 +189,7 @@ static void _FAT_set_stat(struct stat* st, const FILINFO* fno, DvmDisc* disc)
 	st->st_atime = st->st_mtime = st->st_ctime = _FAT_make_time(fno->fdate, fno->ftime);
 
 	// Fill sector-wise information
-	st->st_blksize = FF_MAX_SS; // XX: fs->ssize used when FF_MIN_SS!=FF_MAX_SS
+	st->st_blksize = 1U << disc->sector_shift;
 	st->st_blocks  = st->st_size / st->st_blksize;
 }
 
@@ -333,7 +333,7 @@ int _FAT_fstat_r(struct _reent* r, void* fd, struct stat* st)
 	st->st_atime = st->st_mtime = st->st_ctime = 0;
 
 	// Fill sector-wise information
-	st->st_blksize = FF_MAX_SS; // XX: fs->ssize used when FF_MIN_SS!=FF_MAX_SS
+	st->st_blksize = 1U << vol->disc->sector_shift;
 	st->st_blocks  = st->st_size / st->st_blksize;
 
 	r->_errno = 0;
@@ -457,7 +457,7 @@ int _FAT_statvfs_r(struct _reent* r, const char* path, struct statvfs* buf)
 
 	if (fr == FR_OK && buf) {
 		// Block/fragment size = cluster size
-		buf->f_bsize   = vol->fs.csize * FF_MAX_SS;
+		buf->f_bsize   = vol->fs.csize << disc->sector_shift;
 		buf->f_frsize  = buf->f_bsize;
 
 		// Block information = total/free clusters
@@ -633,5 +633,12 @@ DRESULT disk_ioctl(void* pdrv, BYTE cmd, void* buff)
 			disc->vt->flush(disc);
 			return RES_OK;
 		}
+
+#if FF_MAX_SS != FF_MIN_SS
+		case GET_SECTOR_SHIFT: {
+			*(BYTE*)buff = disc->sector_shift;
+			return RES_OK;
+		}
+#endif
 	}
 }

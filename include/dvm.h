@@ -32,7 +32,8 @@ struct DvmDisc {
 	const DvmDiscIface* vt;
 	uint32_t io_type;
 	uint16_t features;
-	uint16_t num_users;
+	uint8_t num_users;
+	uint8_t sector_shift;
 	sec_t num_sectors;
 };
 
