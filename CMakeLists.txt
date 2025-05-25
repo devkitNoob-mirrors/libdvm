@@ -80,6 +80,15 @@ if(NINTENDO_GAMECUBE OR NINTENDO_WII)
 	target_sources(dvm PRIVATE source/dvm_libogc.c)
 endif()
 
+if(NINTENDO_WII)
+	target_compile_definitions(FatFs PUBLIC
+		FF_MAX_SS=4096
+	)
+	target_compile_definitions(dvm PRIVATE
+		LIBDVM_WITH_DETECT_SECTOR_SHIFT
+	)
+endif()
+
 include(GNUInstallDirs)
 
 # Install the library

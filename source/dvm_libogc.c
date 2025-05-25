@@ -11,6 +11,17 @@ __attribute__((weak)) unsigned g_dvmOgcUsbMount = 1;
 
 void _dvmSetAppWorkingDir(const char* argv0);
 
+#if defined(__wii__)
+unsigned _dvmDetectSectorShift(const DISC_INTERFACE* iface)
+{
+	if (iface == &__io_usbstorage) {
+		return __builtin_ffs(__io_usbstorage_sector_size)-1;
+	} else {
+		return 9; // 512 byte sectors
+	}
+}
+#endif
+
 bool dvmInit(bool set_app_cwdir, unsigned cache_pages, unsigned sectors_per_page)
 {
 	unsigned num_mounted = 0;
